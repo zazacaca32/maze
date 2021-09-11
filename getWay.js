@@ -1,5 +1,5 @@
 // функция возвращает массив всех точек, которые составляют путь от первой выбранной точки до второй выбранной точки
-function getWay (map, startPosition = {x: 0, y: 0}, finishPosition = {x: 48, y: 48}) {
+function getWay (map, startPosition = {x: 0, y: 0}, finishPosition = {x: ROWS_SIZE-2, y: COLUMNS_SIZE-2}) {
 	/*
 		В JS массивы и объекты являются ссылочными сущностями
 		Чтобы не создавать случайной мутации данных, создадим копию объекта map

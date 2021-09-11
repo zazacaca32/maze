@@ -6,18 +6,19 @@ const PADDING = 7 // рамка (отступ внутри канваса)
 const TRACTORS_NUMBER = 1
 
 const canvas = document.querySelector('canvas')
+const img = document.querySelector('img')
 const context = canvas.getContext('2d')
 const map = generatMaze(COLUMNS_SIZE, ROWS_SIZE, TRACTORS_NUMBER)
 
-window.onkeydown = processKey;
+const way = getWay(map)
 
-var playerX = 0;
-var playerY = 0;
+window.onkeydown = processKey
 
-// начальная позиция (будем искать по щелчку мыши)
-let startPosition = null
-// конечная позиция (будем искать по щелчку мыши)
-let finishPosition = null
+let playerX = 0
+let playerY = 0
+
+let isAnswer = false
+
 
 init()
 start()
@@ -26,33 +27,7 @@ start()
 function start () {
 	// requestAnimationFrame() позволяет регистрировать функцию, которая будет вызвана перед обновлением экрана
 	requestAnimationFrame(tick)
-	/*
-		функция принимает аргументы (за каким DOM-элементом следить,
-		функция_которая принимает аргумент mouse и с этим аргументом можно делать манипуляции)
-	*/
-	mouseWatcher(canvas, function (mouse) {
-		if (mouse.x <= PADDING
-			|| mouse.y <= PADDING
-			|| mouse.x >= canvas.width - PADDING
-			|| mouse.y >= canvas.height - PADDING
-		) {
-			return
-		}
 
-		const coordinats = {
-			x: parseInt((mouse.x - PADDING) / FIELD_SIZE),
-			y: parseInt((mouse.y - PADDING) / FIELD_SIZE)
-		}
-
-		// console.log(coordinats)
-
-		// рассматривается ячейка, над которой в данный момент находится мышь
-		// если в ячейке не стена, то пусть эта ячейка будет финишной позицией
-		// иначе финишной позицией останется последняя актуальная финишная позиция
-		if (getField(coordinats.x, coordinats.y) === 'space') {
-			finishPosition = coordinats
-		}
-	})
 }
 
 /*
@@ -64,12 +39,14 @@ function tick (time) {
 	drawMap()
 	
 	// Если определены начальная и конечная точки, искать путь
-	if (startPosition && finishPosition) {
-		const way = getWay(map)
+	if (isAnswer)
 		drawWay(way)
-	}
+	
 
 	drawPlayer();
+
+	if (playerX == ROWS_SIZE-2 && playerY == COLUMNS_SIZE-2)
+		drawWin();
 
 	requestAnimationFrame(tick)
 }
@@ -86,12 +63,11 @@ function init () {
 		с координатами финишной позиции
 	*/
 	canvas.addEventListener('click', function (event) {
-		if (finishPosition) {
-			startPosition = {
-				x: finishPosition.x,
-				y: finishPosition.y
-			}
-		}
+			isAnswer = !isAnswer
+	})
+
+	img.addEventListener('click', function (event) {
+			location.reload();
 	})
 }
 
@@ -147,6 +123,11 @@ function clearCanvas () {
 	context.beginPath()
 	context.rect(PADDING, PADDING, canvas.width - PADDING * 2, canvas.height - PADDING * 2)
 	context.fill()
+}
+
+function drawWin () {
+	canvas.style.display = 'none'
+	img.style.display = ''
 }
 
 // получить значение из матрицы
