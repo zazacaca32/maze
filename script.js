@@ -5,7 +5,11 @@ const PADDING = 7 // рамка (отступ внутри канваса)
 // количество тракторов, которые должны быть на поле
 const TRACTORS_NUMBER = 1
 
+const ENEMYS = 4
+let ENEMYS_ARR = []
+
 const canvas = document.querySelector('canvas')
+const coords = document.querySelector('#coords')
 const img = document.querySelector('img')
 const context = canvas.getContext('2d')
 const map = generatMaze(COLUMNS_SIZE, ROWS_SIZE, TRACTORS_NUMBER)
@@ -16,8 +20,11 @@ window.onkeydown = processKey
 
 let playerX = 0
 let playerY = 0
+let playerHealth = 100;
 
 let isAnswer = false
+
+let tmpTime = 0;
 
 
 init()
@@ -27,6 +34,25 @@ start()
 function start () {
 	// requestAnimationFrame() позволяет регистрировать функцию, которая будет вызвана перед обновлением экрана
 	requestAnimationFrame(tick)
+
+		mouseWatcher(canvas, function (mouse) {
+		if (mouse.x <= PADDING
+			|| mouse.y <= PADDING
+			|| mouse.x >= canvas.width - PADDING
+			|| mouse.y >= canvas.height - PADDING
+		) {
+			return
+		}
+
+		const coordinats = {
+			x: parseInt((mouse.x - PADDING) / FIELD_SIZE),
+			y: parseInt((mouse.y - PADDING) / FIELD_SIZE),
+			type: getField(parseInt((mouse.x - PADDING) / FIELD_SIZE), parseInt((mouse.y - PADDING) / FIELD_SIZE))
+		}
+
+		coords.innerText = JSON.stringify(coordinats);
+
+	})
 
 }
 
@@ -45,8 +71,22 @@ function tick (time) {
 
 	drawPlayer();
 
+	for (var i = 0; i < ENEMYS_ARR.length; i++) {
+		drawEnemy(ENEMYS_ARR[i].x, ENEMYS_ARR[i].y);
+	}
+
 	if (playerX == ROWS_SIZE-2 && playerY == COLUMNS_SIZE-2)
 		drawWin();
+
+	if (playerHealth < 0) 
+		drawLose();
+	
+	if (time > tmpTime){
+		for (var i = 0; i < ENEMYS_ARR.length; i++) {
+		runEnemy(i);
+	}
+		tmpTime = time+500;
+	}
 
 	requestAnimationFrame(tick)
 }
@@ -56,6 +96,14 @@ function init () {
 	// размеры канваса
 	canvas.width = PADDING * 2 + COLUMNS_SIZE * FIELD_SIZE
 	canvas.height = PADDING * 2 + ROWS_SIZE * FIELD_SIZE
+
+	while (ENEMYS_ARR.length != ENEMYS) {
+		var x = getRandomInt(5, COLUMNS_SIZE);
+		var y = getRandomInt(5, ROWS_SIZE)
+		console.log(x,y,ENEMYS_ARR.length , ENEMYS)
+		if (getField(x, y) === 'space') 
+			ENEMYS_ARR.push({x: x, y: y})
+	}
 
 	/*
 		по клику на лабиринт определим начальную позицию пути
@@ -90,7 +138,7 @@ function drawWay (way) {
 	// так как каждая ячейка это по сути массив с координатами x, y,
 	// то их в цикле можно сразу забрать в переменную [x, y]
 	for (const [x, y] of way) {
-		context.fillStyle = 'red'
+		context.fillStyle = 'yellow'
 		context.beginPath()
 		context.rect(PADDING + x * FIELD_SIZE, PADDING + y * FIELD_SIZE, FIELD_SIZE, FIELD_SIZE)
 		context.fill()
@@ -104,6 +152,24 @@ function drawPlayer () {
 		context.rect(PADDING + playerX * FIELD_SIZE, PADDING + playerY * FIELD_SIZE, FIELD_SIZE, FIELD_SIZE)
 		context.fill()
 
+}
+
+function drawEnemy (x, y) {
+		context.fillStyle = 'red'
+		context.beginPath()
+		context.rect(PADDING + x * FIELD_SIZE, PADDING + y * FIELD_SIZE, FIELD_SIZE, FIELD_SIZE)
+		context.fill()
+
+}
+
+function runEnemy (id) {
+		if (ENEMYS_ARR[id].x == playerX && ENEMYS_ARR[id].y == playerY) {
+			playerHealth -= 10;
+			return;
+		}
+		var enemyWay = getWay(map, {x: ENEMYS_ARR[id].x, y: ENEMYS_ARR[id].y}, {x: playerX, y: playerY});
+		ENEMYS_ARR[id].x = enemyWay[enemyWay.length-2][0]
+		ENEMYS_ARR[id].y = enemyWay[enemyWay.length-2][1]
 }
 
 // функция очищает canvas
@@ -126,6 +192,11 @@ function clearCanvas () {
 }
 
 function drawWin () {
+	canvas.style.display = 'none'
+	img.style.display = ''
+}
+
+function drawLose () {
 	canvas.style.display = 'none'
 	img.style.display = ''
 }
@@ -175,4 +246,10 @@ function processKey(e) {
   	playerX = _playerX;
 	playerY = _playerY;
   }
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
