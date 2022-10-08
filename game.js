@@ -1,7 +1,7 @@
 const COLUMNS_SIZE = 50 // количество колонок в лабиринте
 const ROWS_SIZE = 50 // количество строк в лабиринте
-const FIELD_SIZE = 7 // размер клетки в лабиринте
-const PADDING = 7 // рамка (отступ внутри канваса)
+const FIELD_SIZE = 10 // размер клетки в лабиринте
+const PADDING = 10 // рамка (отступ внутри канваса)
 // количество тракторов, которые должны быть на поле
 const TRACTORS_NUMBER = 1
 
@@ -9,20 +9,25 @@ const ENEMYS = 4
 let ENEMYS_ARR = []
 
 const canvas = document.querySelector('canvas')
-const coords = document.querySelector('#coords')
-const img = document.querySelector('img')
+const healthText = document.querySelector('#health')
+const playerhealthBar = document.querySelector('#playerhealth')
+const img = document.querySelector('#win')
+const img_end = document.querySelector('#end')
+const prbar = document.querySelector('#prbar')
+const end_text = document.querySelector('#end_text')
 const context = canvas.getContext('2d')
-const map = generatMaze(COLUMNS_SIZE, ROWS_SIZE, TRACTORS_NUMBER)
+const map = new generatMaze(COLUMNS_SIZE, ROWS_SIZE, TRACTORS_NUMBER)
+var player = new Player();
 
-const way = getWay(map)
 
-window.onkeydown = processKey
 
-let playerX = 0
-let playerY = 0
-let playerHealth = 100;
+window.onkeydown = function (e){player.processKey(e)}
+
+
 
 let isAnswer = false
+
+let isGameEnd = false
 
 let tmpTime = 0;
 
@@ -35,25 +40,6 @@ function start () {
 	// requestAnimationFrame() позволяет регистрировать функцию, которая будет вызвана перед обновлением экрана
 	requestAnimationFrame(tick)
 
-		mouseWatcher(canvas, function (mouse) {
-		if (mouse.x <= PADDING
-			|| mouse.y <= PADDING
-			|| mouse.x >= canvas.width - PADDING
-			|| mouse.y >= canvas.height - PADDING
-		) {
-			return
-		}
-
-		const coordinats = {
-			x: parseInt((mouse.x - PADDING) / FIELD_SIZE),
-			y: parseInt((mouse.y - PADDING) / FIELD_SIZE),
-			type: getField(parseInt((mouse.x - PADDING) / FIELD_SIZE), parseInt((mouse.y - PADDING) / FIELD_SIZE))
-		}
-
-		coords.innerText = JSON.stringify(coordinats);
-
-	})
-
 }
 
 /*
@@ -61,24 +47,28 @@ function start () {
 	timestamp - количество миллисекунд с момента открытия, обновления страницы
 */
 function tick (time) {
+	if (isGameEnd) return;
 	clearCanvas()
 	drawMap()
 	
-	// Если определены начальная и конечная точки, искать путь
-	if (isAnswer)
+	if (isAnswer){
+		var way = getWay(map, {x: player.x, y: player.y})
 		drawWay(way)
+	}
 	
 
 	drawPlayer();
+	if (player.health >= 0)
+	drawHealth();
 
 	for (var i = 0; i < ENEMYS_ARR.length; i++) {
 		drawEnemy(ENEMYS_ARR[i].x, ENEMYS_ARR[i].y);
 	}
 
-	if (playerX == ROWS_SIZE-2 && playerY == COLUMNS_SIZE-2)
+	if (player.x == ROWS_SIZE-2 && player.y == COLUMNS_SIZE-2)
 		drawWin();
 
-	if (playerHealth < 0) 
+	if (player.health < 0) 
 		drawLose();
 	
 	if (time > tmpTime){
@@ -105,11 +95,6 @@ function init () {
 			ENEMYS_ARR.push({x: x, y: y})
 	}
 
-	/*
-		по клику на лабиринт определим начальную позицию пути
-		координаты стартовой позиции будут определяться совпадающими
-		с координатами финишной позиции
-	*/
 	canvas.addEventListener('click', function (event) {
 			isAnswer = !isAnswer
 	})
@@ -149,7 +134,7 @@ function drawWay (way) {
 function drawPlayer () {
 		context.fillStyle = 'lime'
 		context.beginPath()
-		context.rect(PADDING + playerX * FIELD_SIZE, PADDING + playerY * FIELD_SIZE, FIELD_SIZE, FIELD_SIZE)
+		context.rect(PADDING + player.x * FIELD_SIZE, PADDING + player.y * FIELD_SIZE, FIELD_SIZE, FIELD_SIZE)
 		context.fill()
 
 }
@@ -163,11 +148,11 @@ function drawEnemy (x, y) {
 }
 
 function runEnemy (id) {
-		if (ENEMYS_ARR[id].x == playerX && ENEMYS_ARR[id].y == playerY) {
-			playerHealth -= 10;
+		if (ENEMYS_ARR[id].x == player.x && ENEMYS_ARR[id].y == player.y) {
+			player.health -= 10;
 			return;
 		}
-		var enemyWay = getWay(map, {x: ENEMYS_ARR[id].x, y: ENEMYS_ARR[id].y}, {x: playerX, y: playerY});
+		var enemyWay = getWay(map, {x: ENEMYS_ARR[id].x, y: ENEMYS_ARR[id].y}, {x: player.x, y: player.y});
 		ENEMYS_ARR[id].x = enemyWay[enemyWay.length-2][0]
 		ENEMYS_ARR[id].y = enemyWay[enemyWay.length-2][1]
 }
@@ -194,11 +179,22 @@ function clearCanvas () {
 function drawWin () {
 	canvas.style.display = 'none'
 	img.style.display = ''
+	end_text.style.display = ''
+	prbar.style.display = 'none'
+	isGameEnd = true;
 }
+
+function drawHealth() {
+	healthText.innerText = player.health+"%";
+	playerhealthBar.value = player.health;
+}
+
 
 function drawLose () {
 	canvas.style.display = 'none'
-	img.style.display = ''
+	img_end.style.display = ''
+	end_text.style.display = ''
+	isGameEnd = true;
 }
 
 // получить значение из матрицы
@@ -219,34 +215,7 @@ function setField (x, y, value) {
 	map[y][x] = value
 }
 
-function processKey(e) {
-	var _playerX = playerX;
-	var _playerY = playerY;
-  // Если нажата стрелка вверх, начинаем двигаться вверх
-  if (e.keyCode == 38) { //Arrow Up
-    _playerY -= 1;
-  }
 
-  // Если нажата стрелка вниз, начинаем двигаться вниз
-  if (e.keyCode == 40) { // Arrow Down
-    _playerY += 1;
-  }
-
-  // Если нажата стрелка влево, начинаем двигаться влево
-  if (e.keyCode == 37) { // Arrow Left
-    _playerX -= 1;
-  }
-
-  // Если нажата стрелка вправо, начинаем двигаться вправо
-  if (e.keyCode == 39) { // Arrow Right
-    _playerX += 1;
-  }
-
-  if (getField(_playerX, _playerY) === 'space') { 
-  	playerX = _playerX;
-	playerY = _playerY;
-  }
-}
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);

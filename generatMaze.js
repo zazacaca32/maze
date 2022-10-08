@@ -1,8 +1,12 @@
 // функция построит лабиринт (процесс построения на экране виден не будет)
-function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
-	const map = []
+class generatMaze  {
+	constructor(columnsNumber, rowsNumber, tractorsNumber = 1){
+		this.columnsNumber = columnsNumber
+		this.rowsNumber = rowsNumber
+		this.tractorsNumber = tractorsNumber
+	this.map = []
 	// Тракторы, которые будут очищать дорожки в лабиринте
-	const tractors = []
+	this.tractors = []
 
 	for (let y = 0; y < rowsNumber; y++) {
 		const row = []
@@ -11,47 +15,48 @@ function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
 			row.push('wall')
 		}
 
-		map.push(row)
+		this.map.push(row)
 	}
 
-	const startX = getRandomFrom(Array(columnsNumber).fill(0).map((item, index) => index).filter(x => isEven(x)))
-	const startY = getRandomFrom(Array(rowsNumber).fill(0).map((item, index) => index).filter(x => isEven(x)))
+	const startX = this.getRandomFrom(Array(columnsNumber).fill(0).map((item, index) => index).filter(x => this.isEven(x)))
+	const startY = this.getRandomFrom(Array(rowsNumber).fill(0).map((item, index) => index).filter(x => this.isEven(x)))
 
 	// создаем тракторы
 	for (let i = 0; i < tractorsNumber; i++) {
-		tractors.push({ x: startX, y: startY })
+		this.tractors.push({ x: startX, y: startY })
 	}
 
 	// сделаем ячейку, в которой изначально стоит трактор, пустой
-	setField(startX, startY, 'space')
+	this.setField(startX, startY, 'space')
 
 	// если лабиринт ещё не готов, рисовать трактор и регистрировать функцию tick() ещё раз
-	while (!isMaze()) {
-		moveTractors()
+	while (!this.isMaze()) {
+		this.moveTractors()
 	}
 
-	return map
+	return this.map
+}
 
 	// получить значение из матрицы
-	function getField (x, y) {
-		if (x < 0 || x >= columnsNumber || y < 0 || y >= rowsNumber) {
+	 getField (x, y) {
+		if (x < 0 || x >= this.columnsNumber || y < 0 || y >= this.rowsNumber) {
 			return null
 		}
 
-		return map[y][x]
+		return this.map[y][x]
 	}
 
 	// записать значение в матрицу
-	function setField (x, y, value) {
-		if (x < 0 || x >= columnsNumber || y < 0 || y >= rowsNumber) {
+	 setField (x, y, value) {
+		if (x < 0 || x >= this.columnsNumber || y < 0 || y >= this.rowsNumber) {
 			return null
 		}
 
-		map[y][x] = value
+		this.map[y][x] = value
 	}
 
 	// функция возвращает случайный элемент из переданного ей массива
-	function getRandomFrom (array) {
+	 getRandomFrom (array) {
 		// получаем случайным образом индекс элемента массива
 		// число будет в диапазоне от 0 до количества элементов в массиве - 1
 		const index = Math.floor(Math.random() * array.length)
@@ -63,16 +68,16 @@ function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
 		функция проверяет четное число или нет
 		если возвращает true - четное
 	*/
-	function isEven (n) {
+	 isEven (n) {
 		return n % 2 === 0
 	}
 
 	// функция проверяет, готов лабиринт или ещё нет
 	// возвращает true, если лабиринт готов, false если ещё нет
-	function isMaze () {
-		for (let x = 0; x < columnsNumber; x++) {
-			for (let y = 0; y < rowsNumber; y++) {
-				if (isEven(x) && isEven(y) && getField(x, y) === 'wall') {
+	 isMaze () {
+		for (let x = 0; x < this.columnsNumber; x++) {
+			for (let y = 0; y < this.rowsNumber; y++) {
+				if (this.isEven(x) && this.isEven(y) && this.getField(x, y) === 'wall') {
 					return false
 				}
 			}
@@ -86,8 +91,8 @@ function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
 		трактор должен двигаться на 2 клетки
 		если вторая клетка со стеной, то нужно очистить первую и вторую
 	*/
-	function moveTractors () {
-		for (const tractor of tractors) {
+	 moveTractors () {
+		for (const tractor of this.tractors) {
 			// массив с возможными направлениями трактора
 			const directs = []
 
@@ -95,7 +100,7 @@ function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
 				directs.push('left')
 			}
 
-			if (tractor.x < columnsNumber - 2) {
+			if (tractor.x < this.columnsNumber - 2) {
 				directs.push('right')
 			}
 
@@ -103,39 +108,39 @@ function generatMaze (columnsNumber, rowsNumber, tractorsNumber = 1) {
 				directs.push('up')
 			}
 
-			if (tractor.y < rowsNumber - 2) {
+			if (tractor.y < this.rowsNumber - 2) {
 				directs.push('down')
 			}
 
 			// случайным образом выбрать направление, в котором можно пойти
-			const direct = getRandomFrom(directs)
+			const direct = this.getRandomFrom(directs)
 
 			switch (direct) {
 				case 'left':
-					if (getField(tractor.x - 2, tractor.y) === 'wall') {
-						setField(tractor.x - 1, tractor.y, 'space')
-						setField(tractor.x - 2, tractor.y, 'space')
+					if (this.getField(tractor.x - 2, tractor.y) === 'wall') {
+						this.setField(tractor.x - 1, tractor.y, 'space')
+						this.setField(tractor.x - 2, tractor.y, 'space')
 					}
 					tractor.x -= 2
 					break
 				case 'right':
-					if (getField(tractor.x + 2, tractor.y) === 'wall') {
-						setField(tractor.x + 1, tractor.y, 'space')
-						setField(tractor.x + 2, tractor.y, 'space')
+					if (this.getField(tractor.x + 2, tractor.y) === 'wall') {
+						this.setField(tractor.x + 1, tractor.y, 'space')
+						this.setField(tractor.x + 2, tractor.y, 'space')
 					}
 					tractor.x += 2
 					break
 				case 'up':
-					if (getField(tractor.x, tractor.y - 2) === 'wall') {
-						setField(tractor.x, tractor.y - 1, 'space')
-						setField(tractor.x, tractor.y - 2, 'space')
+					if (this.getField(tractor.x, tractor.y - 2) === 'wall') {
+						this.setField(tractor.x, tractor.y - 1, 'space')
+						this.setField(tractor.x, tractor.y - 2, 'space')
 					}
 					tractor.y -= 2
 					break
 				case 'down':
-					if (getField(tractor.x, tractor.y + 2) === 'wall') {
-						setField(tractor.x, tractor.y + 1, 'space')
-						setField(tractor.x, tractor.y + 2, 'space')
+					if (this.getField(tractor.x, tractor.y + 2) === 'wall') {
+						this.setField(tractor.x, tractor.y + 1, 'space')
+						this.setField(tractor.x, tractor.y + 2, 'space')
 					}
 					tractor.y += 2
 					break

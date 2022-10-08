@@ -6,15 +6,51 @@
 </head>
 <body>
 	<div style="text-align: center;">
-	<img style="display: none;" src="win.jpg" alt="win">
+	<img style="display: none;" src="win.jpg" id="win" alt="win">
+	<img style="display: none;" src="end.png" id="end" alt="end">
 	<canvas></canvas><br>
-	<p>Кликни на лабиринт для ..</p>
-	<p id="coords">a </p>
+	<div id="prbar" class="progress-container player-health">
+  <progress class="progressplayer" id="playerhealth" value="80" max="100"></progress>
+  <p id="health" class="progress-label">
+    80%
+  </p>
+</div>
+<h1 style="display: none;" id="end_text">Игра окончена!</h1>
 
 	</div>
 	<script src="generatMaze.js"></script>
 	<script src="getWay.js"></script>
-	<script src="mouseWatcher.js"></script>
-	<script src="script.js"></script>
+
+	<script src="player.js"></script>
+	<script src="game.js"></script>
+	<style>
+		.progressplayer{
+			width: 515px
+		}
+		.progress-container {
+    position: relative;
+}
+
+.progress-container progress {
+    background-color: #eee;
+    height: 40px;
+}
+
+.progress-container progress::-webkit-progress-bar {
+    background-color: #eee;
+}
+
+.progress-container progress::-webkit-progress-value {
+    background-color: red;
+}
+
+.progress-container .progress-label {
+    position: absolute;
+    top: 7px;
+    margin: 0;
+    left: 49%;
+    font-size: 22px;
+}
+	</style>
 </body>
 </html>
